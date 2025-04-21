@@ -1,0 +1,8 @@
+parameters:
+    level: max
+
+services:
+    - 
+        class: Mamazu\DoctrinePerformance\DoctrinePerformanceRule
+        tags:
+            - phpstan.rules.rule
