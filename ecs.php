@@ -4,25 +4,23 @@ declare(strict_types=1);
 
 use PhpCsFixer\Fixer\Import\NoUnusedImportsFixer;
 use Symplify\EasyCodingStandard\Config\ECSConfig;
+use Symplify\EasyCodingStandard\ValueObject\Option;
 
 return ECSConfig::configure()
-    ->withPaths([
-        __DIR__ . '/src',
-        __DIR__ . '/test',
-    ])
+	->withPaths([
+		__DIR__ . '/src',
+		__DIR__ . '/test',
+	])
+	->withSpacing(Option::INDENTATION_TAB)
 
-    // add a single rule
-    ->withRules([
-        NoUnusedImportsFixer::class,
-    ])
-
-    // add sets - group of rules
+	// add sets - group of rules
 	->withPreparedSets(
-		 arrays: true,
-		 namespaces: true,
-		 spaces: true,
-		 docblocks: true,
-		 comments: true,
-	 )
-
-	 ;
+		symplify: true,
+		arrays: true,
+		namespaces: true,
+		spaces: true,
+		docblocks: true,
+		comments: true,
+		cleanCode: true,
+	)
+	;

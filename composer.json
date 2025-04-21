@@ -4,6 +4,7 @@
     "description": "Rules for doctrine query performance.",
     "licence": "MIT",
     "require": {
+        "doctrine/persistence": "^4.0",
         "phpstan/phpstan": "^2.0"
     },
     "require-dev": {
@@ -18,7 +19,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Test\\Mamazu\\DoctrinePerformance\\": "test/"
+            "Test\\Mamazu\\DoctrinePerformance\\": "tests/"
         }
     },
     "authors": [

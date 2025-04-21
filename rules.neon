@@ -2,7 +2,11 @@ parameters:
     level: max
 
 services:
-    - 
-        class: Mamazu\DoctrinePerformance\DoctrinePerformanceRule
+    -
+        class: Mamazu\DoctrinePerformance\Services\MetadataService
+    -
+        class: Mamazu\DoctrinePerformance\DoctrineQueryBuilderRule
+        arguments:
+            metadataService: "@Mamazu\DoctrinePerformance\Services\MetadataService"
         tags:
             - phpstan.rules.rule
