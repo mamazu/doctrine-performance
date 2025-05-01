@@ -5,16 +5,21 @@ declare(strict_types=1);
 namespace Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities;
 
 use Mamazu\DoctrinePerformance\Attributes\SmallTable;
+use Doctrine\ORM\Mapping as ORM;
 
 #[SmallTable]
+#[ORM\Entity]
+#[ORM\Table(name: 'settings')]
 class Settings
 {
-	public string $name1;
-	public string $name2;
-	public string $name3;
-	public string $name4;
-	public string $name5;
-	public string $name6;
-	public string $name7;
-	public string $name8;
+	#[ORM\Id]
+	#[ORM\Column(type: 'integer')]
+	#[ORM\GeneratedValue]
+	private int|null $id = null;
+
+	#[ORM\Column(type: 'string')]
+	public string $key;
+
+	#[ORM\Column(type: 'string')]
+	public string $value;
 }

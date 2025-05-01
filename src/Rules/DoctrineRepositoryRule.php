@@ -47,6 +47,7 @@ class DoctrineRepositoryRule implements Rule
 			return [];
 		}
 
+		// Checking for Repository vs Repository<Entity>
 		if (!$repositoryType instanceof GenericObjectType) {
 			return [
 				RuleErrorBuilder::message('Found ObjectRepository but could not determine type of its entity')
@@ -55,19 +56,27 @@ class DoctrineRepositoryRule implements Rule
 			];
 		}
 
-		$entityType = $repositoryType->getTypes()[0]->getClassName();
-		if ($this->metadataService->shouldEntityBeSkipped($entityType)) {
+		$entityClass = $repositoryType->getTypes()[0]->getClassName();
+		if ($this->metadataService->shouldEntityBeSkipped($entityClass)) {
 			return [];
 		}
 
 		$usedColumns = $this->getUsedColumns($node->args);
+		$notIndexedColumns = $this->metadataService->nonIndexedColums($entityClass, array_keys($usedColumns));
+
 		$errors = [];
-		foreach ($usedColumns as $usedColumn => $token){
-			if (!$this->metadataService->isColumnIndexed($entityType,$usedColumn)){
-				$errors[] = RuleErrorBuilder::message('Found column '.$entityType .'::'.$usedColumn.' which is not indexed.')
-					->line($token->getLine())
-				->build();
-			}
+		foreach ($notIndexedColumns as $notIndexedColumn){
+			$token = $usedColumns[$notIndexedColumn];
+
+			$errors[] = RuleErrorBuilder::message(sprintf(
+				'Found column "%s" of entity "%s" which is not indexed.',
+				$notIndexedColumn,
+				$entityClass,
+			))
+				->line($token->getLine())
+				->build()
+			;
+
 		}
 		return $errors;
 	}

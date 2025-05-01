@@ -5,7 +5,8 @@
     "licence": "MIT",
     "require": {
         "doctrine/persistence": "^4.0",
-        "phpstan/phpstan": "^2.0"
+        "phpstan/phpstan": "^2.0",
+        "symfony/cache": "^7.2"
     },
     "require-dev": {
         "doctrine/orm": "^3.3",
