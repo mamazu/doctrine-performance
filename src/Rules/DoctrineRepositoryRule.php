@@ -7,16 +7,13 @@ namespace Mamazu\DoctrinePerformance\Rules;
 use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
-use PhpParser\Node\Expr\ClassConstFetch;
-use PhpParser\Node\Expr\MethodCall;
-use PhpParser\Node\Scalar\String_;
-use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\ArrayItem;
+use PhpParser\Node\Expr\Array_;
+use PhpParser\Node\Expr\MethodCall;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\Generic\GenericObjectType;
-use PHPStan\Type\VerbosityLevel;
 /**
  * @implements Rule<MethodCall>
  */
@@ -42,21 +39,23 @@ class DoctrineRepositoryRule implements Rule
 			return [];
 		}
 
-		$repositoryType=$scope->getType($node->var);
+		$repositoryType = $scope->getType($node->var);
 		if ($repositoryType->isInstanceOf('Doctrine\Persistence\ObjectRepository')->no()) {
 			return [];
 		}
 
 		// Checking for Repository vs Repository<Entity>
-		if (!$repositoryType instanceof GenericObjectType) {
+		if (! $repositoryType instanceof GenericObjectType) {
 			return [
 				RuleErrorBuilder::message('Found ObjectRepository but could not determine type of its entity')
+					->identifier(self::RULE_IDENTIFIER)
 					->tip('Use something like /** @var ObjectRepository<Entity> */ to denote the entity of the repository')
 					->build(),
 			];
 		}
 
-		$entityClass = $repositoryType->getTypes()[0]->getClassName();
+		$entityClass = $repositoryType->getTypes()[0]
+			->getClassName();
 		if ($this->metadataService->shouldEntityBeSkipped($entityClass)) {
 			return [];
 		}
@@ -73,6 +72,7 @@ class DoctrineRepositoryRule implements Rule
 				$notIndexedColumn,
 				$entityClass,
 			))
+				->identifier(self::RULE_IDENTIFIER)
 				->line($token->getLine())
 				->build()
 			;
@@ -91,7 +91,7 @@ class DoctrineRepositoryRule implements Rule
 		$columns = [];
 		foreach ($args as $arg) {
 			$value = $arg->value;
-			if (!($value instanceof Array_)) {
+			if (! ($value instanceof Array_)) {
 				continue;
 			}
 
