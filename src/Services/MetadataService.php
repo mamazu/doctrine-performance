@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace Mamazu\DoctrinePerformance\Services;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\Mapping\MappingException;
 use Mamazu\DoctrinePerformance\Attributes\SmallTable;
 use ReflectionClass;
 
 class MetadataService
 {
-	public function __construct(
-		private EntityManagerInterface $entityManager
-	) {}
+	private EntityManagerInterface $entityManager;
+
+	public function __construct(EntityManagerLoader $loader) {
+		$this->entityManager = $loader->getEntityManager();
+	}
 
 	/**
 	 * @param array<string> $columnNames
@@ -22,12 +25,22 @@ class MetadataService
 	 */
 	public function nonIndexedColums(string $className, array $columnNames): array
 	{
+		try {
+			$classMetaData = $this->entityManager->getClassMetadata($className);
+		} catch (MappingException) {
+			return [];
+		}
+
 		sort($columnNames);
 
 		// Check if the column is an indexed field
 		$notIndexed = [];
-		$classMetaData = $this->entityManager->getClassMetadata($className);
 		foreach ($columnNames as $columnName) {
+			// Associations are always indexed
+			if ($classMetaData->hasAssociation($columnName)) {
+				continue;
+			}
+
 			$fieldData = $classMetaData->getFieldMapping($columnName);
 
 			if($classMetaData->isUniqueField($columnName) || $classMetaData->isIdentifier($columnName)) {
@@ -55,7 +68,7 @@ class MetadataService
 
 	/**
 	 * @param class-string|ReflectionClass<object> $className
-	*/
+	 */
 	public function shouldEntityBeSkipped(string|ReflectionClass $className): bool
 	{
 		if ($className instanceof ReflectionClass) {

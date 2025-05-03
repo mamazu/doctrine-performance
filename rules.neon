@@ -1,12 +1,23 @@
-parameters:
-    level: max
+rules:
+	- Mamazu\DoctrinePerformance\Rules\DoctrineRepositoryRule
+	- Mamazu\DoctrinePerformance\Rules\DoctrineQueryBuilderRule
 
 services:
-    -
-        class: Mamazu\DoctrinePerformance\Services\MetadataService
-    -
-        class: Mamazu\DoctrinePerformance\DoctrineQueryBuilderRule
-        arguments:
-            metadataService: "@Mamazu\DoctrinePerformance\Services\MetadataService"
-        tags:
-            - phpstan.rules.rule
+	-
+		class: 'Mamazu\DoctrinePerformance\Services\EntityManagerLoader'
+		arguments:
+			path: %doctrine.objectManagerLoader%
+	-
+		class: 'Mamazu\DoctrinePerformance\Services\MetadataService'
+		arguments:
+			loader: '@Mamazu\DoctrinePerformance\Services\EntityManagerLoader'
+	-
+		class: 'Mamazu\DoctrinePerformance\Rules\DoctrineRepositoryRule'
+		arguments:
+			metadataService: '@Mamazu\DoctrinePerformance\Services\MetadataService'
+		tags: [ 'phpstan.rules.rule' ]
+	-
+		class: 'Mamazu\DoctrinePerformance\Rules\DoctrineQueryBuilderRule'
+		arguments:
+			metadataService: '@Mamazu\DoctrinePerformance\Services\MetadataService'
+		tags: [ 'phpstan.rules.rule' ]

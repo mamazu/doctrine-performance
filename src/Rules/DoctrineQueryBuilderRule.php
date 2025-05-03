@@ -34,6 +34,7 @@ class DoctrineQueryBuilderRule implements Rule
 	 */
 	public function processNode(Node $node, Scope $scope): array
 	{
+		return [];
 		if (! $node->name instanceof Node\Identifier || (stripos((string) $node->name, 'where')) === false) {
 			return [];
 		}
@@ -74,7 +75,7 @@ class DoctrineQueryBuilderRule implements Rule
 		return [
 			RuleErrorBuilder::message('Class name: ' . $className . '|' . $methodCall->name)
 				->identifier(self::RULE_IDENTIFIER)
-				->build()
+				->build(),
 		];
 	}
 
