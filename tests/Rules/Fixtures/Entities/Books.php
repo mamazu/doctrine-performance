@@ -30,4 +30,9 @@ class Books
 
 	#[ORM\Column(type: 'datetime_immutable')]
 	public DatetimeImmutable $publishDate;
+
+	public function getId(): ?int
+	{
+		return $this->id;
+	}
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Mamazu\DoctrinePerformance\Rules;
 
+use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PhpParser\Node;
 use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\MethodCall;
@@ -11,7 +12,6 @@ use PhpParser\Node\Scalar\String_;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
-use Mamazu\DoctrinePerformance\Services\MetadataService;
 
 /**
  * @implements Rule<MethodCall>
@@ -54,7 +54,8 @@ class DoctrineQueryBuilderRule implements Rule
 			return [];
 		}
 
-		$argument = $methodCall->getArgs()[0]->value;
+		$argument = $methodCall->getArgs()[0]
+			->value;
 		$className = null;
 
 		if ($argument instanceof String_) {
@@ -62,14 +63,19 @@ class DoctrineQueryBuilderRule implements Rule
 		}
 
 		if ($argument instanceof ClassConstFetch) {
-			$className = $scope->getType($argument)->getValue();
+			$className = $scope->getType($argument)
+				->getValue();
 		}
 
 		if ($this->metadataService->shouldEntityBeSkipped($className)) {
 			return [];
 		}
 
-		return [RuleErrorBuilder::message('Class name: ' . $className . '|' . $methodCall->name) ->build()];
+		return [
+			RuleErrorBuilder::message('Class name: ' . $className . '|' . $methodCall->name)
+				->identifier(self::RULE_IDENTIFIER)
+				->build()
+		];
 	}
 
 	private function getCallFromChain(Node $node, string $name): ?MethodCall

@@ -10,14 +10,16 @@ use ReflectionClass;
 
 class MetadataService
 {
-	public function __construct(private EntityManagerInterface $entityManager) {}
+	public function __construct(
+		private EntityManagerInterface $entityManager
+	) {}
 
 	/**
 	 * @param array<string> $columnNames
 	 *		The names of the columns that should be checked if they're indexed.
 	 * @return array<string>
 	 *		The list of columns that do not have an index to help.
-	*/
+	 */
 	public function nonIndexedColums(string $className, array $columnNames): array
 	{
 		sort($columnNames);
@@ -40,10 +42,7 @@ class MetadataService
 		}
 
 		// Check if it's a composite index
-		$indexes = [
-			...($classMetaData->table['indexes'] ?? []),
-			...($classMetaData->table['uniqueConstraints'] ?? []),
-		];
+		$indexes = [...($classMetaData->table['indexes'] ?? []), ...($classMetaData->table['uniqueConstraints'] ?? [])];
 		foreach($indexes as ['columns' => $columns]) {
 			// If all columns are in a composite index
 			if ([] === array_diff($columns, $columnNames)) {
@@ -51,10 +50,12 @@ class MetadataService
 			}
 		}
 
-
 		return $notIndexed;
 	}
 
+	/**
+	 * @param class-string|ReflectionClass<object> $className
+	*/
 	public function shouldEntityBeSkipped(string|ReflectionClass $className): bool
 	{
 		if ($className instanceof ReflectionClass) {

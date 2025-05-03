@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace Test\Mamazu\DoctrinePerformance\Rules;
 
+use Doctrine\DBAL\DriverManager;
+use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\ORMSetup;
 use Mamazu\DoctrinePerformance\Rules\DoctrineQueryBuilderRule;
 use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
-use Doctrine\DBAL\DriverManager;
-use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\ORMSetup;
 
+/**
+ * @extends RuleTestCase<DoctrineQueryBuilderRule>
+ */
 class DoctrineQueryRuleTest extends RuleTestCase
 {
 	public function getRule(): Rule
@@ -31,9 +34,6 @@ class DoctrineQueryRuleTest extends RuleTestCase
 
 	public function testStuff(): void
 	{
-		$this->analyse(
-			[__DIR__.'/Fixtures/ExampleController.php'],
-			[],
-		);
+		$this->analyse([__DIR__ . '/Fixtures/ExampleController.php'], []);
 	}
 }

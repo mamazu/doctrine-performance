@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace Test\Mamazu\DoctrinePerformance\Rules;
 
+use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\ORMSetup;
 use Mamazu\DoctrinePerformance\Rules\DoctrineRepositoryRule;
 use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
-use Doctrine\DBAL\DriverManager;
-use Doctrine\ORM\ORMSetup;
 
+/**
+ * @extends RuleTestCase<DoctrineRepositoryRule>
+ */
 class DoctrineRepositoryRuleTest extends RuleTestCase
 {
 	public function getRule(): Rule
@@ -32,7 +35,7 @@ class DoctrineRepositoryRuleTest extends RuleTestCase
 	public function testStuff(): void
 	{
 		$this->analyse(
-			[__DIR__.'/Fixtures/ExampleRepository.php'],
+			[__DIR__ . '/Fixtures/ExampleRepository.php'],
 			[
 				[
 					'Found column "author" of entity "Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities\Books" which is not indexed.',

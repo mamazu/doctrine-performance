@@ -9,7 +9,7 @@ use Symplify\EasyCodingStandard\ValueObject\Option;
 return ECSConfig::configure()
 	->withPaths([
 		__DIR__ . '/src',
-		__DIR__ . '/test',
+		__DIR__ . '/tests',
 	])
 	->withSpacing(Option::INDENTATION_TAB)
 

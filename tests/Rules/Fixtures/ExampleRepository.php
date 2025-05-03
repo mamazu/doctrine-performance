@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace Test\Mamazu\DoctrinePerformance\Rules\Fixtures;
 
 use DateTimeImmutable;
-use Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities\Books;
 use Doctrine\Persistence\ObjectRepository;
-use Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities\Settings;
+use Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities\Books;
 
 class ExampleRepository
 {
@@ -15,11 +14,11 @@ class ExampleRepository
      * @param ObjectRepository<Books> $repository
      */
     public function __construct(
-		private ObjectRepository $repository
-	) {
+    	private ObjectRepository $repository
+    ) {
 	}
 
-	public function getSettings(): Books
+	public function getSettings(): void
 	{
 		// Only author is not indexed
 		$a = $this->repository->findBy([
@@ -33,12 +32,12 @@ class ExampleRepository
 		]);
 
 		// There is a unique constraint called "title_and_author"
-		$b = $this->repository->findBy([
+		$c = $this->repository->findBy([
 			'title' => 'Testing',
 			'author' => 'Some author',
 		]);
 
-		return $this->repository->findBy([
+		$d = $this->repository->findBy([
 			'id' => 'true',
 			'publishDate' => new DateTimeImmutable(),
 		]);
