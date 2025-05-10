@@ -4,6 +4,8 @@ rules:
 
 services:
 	-
+		class: 'Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName'
+	-
 		class: 'Mamazu\DoctrinePerformance\Services\EntityManagerLoader'
 		arguments:
 			path: %doctrine.objectManagerLoader%
@@ -14,10 +16,12 @@ services:
 	-
 		class: 'Mamazu\DoctrinePerformance\Rules\DoctrineRepositoryRule'
 		arguments:
+			entityClassFinder: '@Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName'
 			metadataService: '@Mamazu\DoctrinePerformance\Services\MetadataService'
 		tags: [ 'phpstan.rules.rule' ]
 	-
 		class: 'Mamazu\DoctrinePerformance\Rules\DoctrineQueryBuilderRule'
 		arguments:
+			entityClassFinder: '@Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName'
 			metadataService: '@Mamazu\DoctrinePerformance\Services\MetadataService'
 		tags: [ 'phpstan.rules.rule' ]

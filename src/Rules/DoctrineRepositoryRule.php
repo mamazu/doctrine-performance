@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Mamazu\DoctrinePerformance\Rules;
 
 use Doctrine\Persistence\ObjectRepository;
+use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
 use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
@@ -12,11 +13,9 @@ use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\MethodCall;
 use PHPStan\Analyser\Scope;
-use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\ErrorType;
-use PHPStan\Type\Generic\GenericObjectType;
 use PHPStan\Type\IntersectionType;
 use PHPStan\Type\MixedType;
 use PHPStan\Type\NullType;
@@ -35,8 +34,8 @@ class DoctrineRepositoryRule implements Rule
 	private const RULE_IDENTIFIER = 'doctrine.repository.performance';
 
 	public function __construct(
+		private GetEntityFromClassName $entityClassFinder,
 		private MetadataService $metadataService,
-		private ReflectionProvider $reflectionProvider,
 	) {}
 
 	public function getNodeType(): string
@@ -79,7 +78,7 @@ class DoctrineRepositoryRule implements Rule
 		}
 
 		// Checking for Repository vs Repository<Entity>
-		$entityType = $this->getEntityClassName($repositoryType);
+		$entityType = $this->entityClassFinder->getEntityClassName($repositoryType);
 		if ($entityType === null) {
 			return [
 				RuleErrorBuilder::message(
@@ -178,30 +177,5 @@ class DoctrineRepositoryRule implements Rule
 			return $type;
 		}
 		return null;
-	}
-
-	private function getEntityClassName($repositoryType): ?ObjectType
-	{
-		if ($repositoryType instanceof GenericObjectType) {
-			$entityType = $repositoryType->getTypes()[0];
-			if (! $entityType instanceof ObjectType) {
-				return null;
-			}
-
-			return $entityType;
-		}
-
-		dump($repositoryType->describe(VerbosityLevel::typeOnly()));
-
-		$type = $this->reflectionProvider
-			->getClass($repositoryType->getClassName())
-			->getAncestorWithClassName(ObjectRepository::class)
-			->getActiveTemplateTypeMap()
-			->getType('TEntityClass')
-		;
-		if (! $type instanceof ObjectType) {
-			return null;
-		}
-		return $type;
 	}
 }
