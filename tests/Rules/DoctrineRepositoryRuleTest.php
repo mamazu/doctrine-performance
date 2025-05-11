@@ -7,10 +7,12 @@ namespace Test\Mamazu\DoctrinePerformance\Rules;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
+use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
 use Mamazu\DoctrinePerformance\Rules\DoctrineRepositoryRule;
 use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
+use Test\Mamazu\DoctrinePerformance\TestEntityManagerLoader;
 
 /**
  * @extends RuleTestCase<DoctrineRepositoryRule>
@@ -19,17 +21,11 @@ class DoctrineRepositoryRuleTest extends RuleTestCase
 {
 	public function getRule(): Rule
 	{
-		$config = ORMSetup::createAttributeMetadataConfiguration(
-			paths: [__DIR__ . '/Fixtures/Entities'],
-			isDevMode: true,
+		$entityManagerLoader = new TestEntityManagerLoader();
+		return new DoctrineRepositoryRule(
+			new GetEntityFromClassName($this->createReflectionProvider()),
+			new MetadataService($entityManagerLoader),
 		);
-		$connection = DriverManager::getConnection([
-			'driver' => 'pdo_sqlite',
-			'path' => __DIR__ . '/db.sqlite',
-		], $config);
-
-		$em = new EntityManager($connection, $config);
-		return new DoctrineRepositoryRule(new MetadataService($em));
 	}
 
 	public function testStuff(): void
@@ -39,7 +35,7 @@ class DoctrineRepositoryRuleTest extends RuleTestCase
 			[
 				[
 					'Found column "author" of entity "Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities\Books" which is not indexed.',
-					26,
+					25,
 				],
 			]
 		);

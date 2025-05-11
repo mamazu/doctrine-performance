@@ -6,7 +6,7 @@ namespace Mamazu\DoctrinePerformance\Services;
 
 use Doctrine\ORM\EntityManagerInterface;
 
-class EntityManagerLoader
+class EntityManagerLoader implements EntityManagerLoaderInterface
 {
 	private EntityManagerInterface $entityManager;
 

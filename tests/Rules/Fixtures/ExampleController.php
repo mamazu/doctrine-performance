@@ -21,18 +21,15 @@ class ExampleController
 
 		$qb
 			->from(Books::class, 'u')
-			->where('u.name')
+			->where('u.title')
+			->andWhere('u.title')
+			->orWhere('u.title')
 		;
 
-		$qb
-			->from(Books::class, 'u')
-			->andWhere('u.name')
-			->orWhere('u.name')
-		;
-
+		// This should complain because there is no mapping on that entity for the title field
 		$qb
 			->from(Settings::class, 's')
-			->andWhere('s.name')
+			->andWhere('s.title')
 		;
 	}
 }

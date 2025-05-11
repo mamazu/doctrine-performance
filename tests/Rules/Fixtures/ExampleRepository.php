@@ -10,12 +10,12 @@ use Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities\Books;
 
 class ExampleRepository
 {
-    /**
-     * @param ObjectRepository<Books> $repository
-     */
-    public function __construct(
-    	private ObjectRepository $repository
-    ) {
+	/**
+	 * @param ObjectRepository<Books> $repository
+	 */
+	public function __construct(
+		private ObjectRepository $repository
+	) {
 	}
 
 	public function getSettings(): void
@@ -42,4 +42,11 @@ class ExampleRepository
 			'publishDate' => new DateTimeImmutable(),
 		]);
 	}
+
+	//public function queryIt() {
+		//$this->repository
+			//->createQueryBuilder('book')
+			//->where('author = :name')
+		//;
+	//}
 }

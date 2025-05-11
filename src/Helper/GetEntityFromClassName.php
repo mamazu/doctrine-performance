@@ -8,6 +8,7 @@ use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Type\Generic\GenericObjectType;
 use PHPStan\Type\ObjectType;
 use Doctrine\Persistence\ObjectRepository;
+use PHPStan\Type\VerbosityLevel;
 
 class GetEntityFromClassName
 {

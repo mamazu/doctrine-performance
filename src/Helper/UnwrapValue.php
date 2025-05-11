@@ -29,7 +29,7 @@ class UnwrapValue
 		return null;
 	}
 
-	public static function className($className, Scope $scope): string
+	public static function className($className, Scope $scope): ?string
 	{
 		if ($className instanceof String_) {
 			return $className->value;
@@ -43,7 +43,6 @@ class UnwrapValue
 			return $className->getStaticObjectType()->describe(VerbosityLevel::typeOnly());
 		}
 
-		debug_print_backtrace();
-		dd($className);
+		return null;
 	}
 }

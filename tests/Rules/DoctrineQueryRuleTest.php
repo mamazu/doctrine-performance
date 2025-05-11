@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace Test\Mamazu\DoctrinePerformance\Rules;
 
-use Doctrine\DBAL\DriverManager;
-use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\ORMSetup;
+use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
 use Mamazu\DoctrinePerformance\Rules\DoctrineQueryBuilderRule;
 use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PHPStan\Rules\Rule;
 use PHPStan\Testing\RuleTestCase;
+use Test\Mamazu\DoctrinePerformance\TestEntityManagerLoader;
 
 /**
  * @extends RuleTestCase<DoctrineQueryBuilderRule>
@@ -19,21 +18,20 @@ class DoctrineQueryRuleTest extends RuleTestCase
 {
 	public function getRule(): Rule
 	{
-		$config = ORMSetup::createAttributeMetadataConfiguration(
-			paths: [__DIR__ . '/Fixtures/Entities'],
-			isDevMode: true,
+		$entityManagerLoader = new TestEntityManagerLoader();
+		return new DoctrineQueryBuilderRule(
+			new GetEntityFromClassName($this->createReflectionProvider()),
+			new MetadataService($entityManagerLoader),
 		);
-		$connection = DriverManager::getConnection([
-			'driver' => 'pdo_sqlite',
-			'path' => __DIR__ . '/db.sqlite',
-		], $config);
-
-		$entityManager = new EntityManager($connection, $config);
-		return new DoctrineQueryBuilderRule(new MetadataService($entityManager));
 	}
 
 	public function testStuff(): void
 	{
 		$this->analyse([__DIR__ . '/Fixtures/ExampleController.php'], []);
+	}
+
+	public function testGettingEntityType(): void
+	{
+		$this->analyse([__DIR__ . '/Fixtures/ExtendingRepository.php'], []);
 	}
 }

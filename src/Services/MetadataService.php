@@ -13,7 +13,7 @@ class MetadataService
 {
 	private EntityManagerInterface $entityManager;
 
-	public function __construct(EntityManagerLoader $loader) {
+	public function __construct(EntityManagerLoaderInterface $loader) {
 		$this->entityManager = $loader->getEntityManager();
 	}
 
