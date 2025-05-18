@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Mamazu\DoctrinePerformance\Rules;
+namespace Mamazu\DoctrinePerformance\Collectors;
 
 use Doctrine\Persistence\ObjectRepository;
 use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
@@ -25,11 +25,13 @@ use PHPStan\Type\ThisType;
 use PHPStan\Type\Type;
 use PHPStan\Type\UnionType;
 use PHPStan\Type\VerbosityLevel;
+use PHPStan\Collectors\Collector;
 
 /**
- * @implements Rule<MethodCall>
+ * @implements Collector<MethodCall>
+ * @phpstan-import-type NonIndexedColumData from NonIndexedColumnsRule
  */
-class DoctrineRepositoryRule implements Rule
+class DoctrineRepositoryCollector implements Collector
 {
 	private const RULE_IDENTIFIER = 'doctrine.repository.performance';
 
@@ -46,11 +48,11 @@ class DoctrineRepositoryRule implements Rule
 	/**
 	 * @param MethodCall $node
 	 */
-	public function processNode(Node $node, Scope $scope): array
+	public function processNode(Node $node, Scope $scope): ?array
 	{
 		// We don't support dynamic method calls
 		if (! $node->name instanceof Node\Identifier) {
-			return [];
+			return null;
 		}
 
 		// We only care for method calls to the ObjectRepository. Filter out all methods that are not part of that.
@@ -58,12 +60,12 @@ class DoctrineRepositoryRule implements Rule
 		$type = new ObjectType(ObjectRepository::class);
 		$methodName = (string) $node->name;
 		if (! $type->hasMethod($methodName)->yes()) {
-			return [];
+			return null;
 		}
 
 		// Find always uses the identifier which is indexed
 		if ($methodName === 'find' || $methodName === 'getClassName') {
-			return [];
+			return null;
 		}
 
 		$repositoryType = $scope->getType($node->var);
@@ -74,66 +76,35 @@ class DoctrineRepositoryRule implements Rule
 
 		$repositoryType = $this->typeIsRepository($repositoryType);
 		if ($repositoryType === null) {
-			return [];
+			return null;
 		}
 
 		// Checking for Repository vs Repository<Entity>
 		$entityType = $this->entityClassFinder->getEntityClassName($repositoryType);
 		if ($entityType === null) {
-			return [
-				RuleErrorBuilder::message(
-					'Found ' . $repositoryType->describe(VerbosityLevel::typeOnly()) . ' but could not determine type of its entity'
-				)
-					->identifier(self::RULE_IDENTIFIER . '.unknownRepo')
-					->tip('Use something like /** @var ObjectRepository<Entity> */ to denote the entity of the repository')
-					->line($node->getLine())
-					->build(),
-			];
+			return null;
+				//RuleErrorBuilder::message(
+					//'Found ' . $repositoryType->describe(VerbosityLevel::typeOnly()) . ' but could not determine type of its entity'
+				//)
+					//->identifier(self::RULE_IDENTIFIER . '.unknownRepo')
+					//->tip('Use something like /** @var ObjectRepository<Entity> */ to denote the entity of the repository')
+					//->line($node->getLine())
+					//->build(),
+			//];
 		}
 
 		$entityClass = $entityType->getClassName();
-		if ($this->metadataService->shouldEntityBeSkipped($entityClass)) {
-			return [];
-		}
 
-		$errors = [];
 		if (in_array($methodName, ['findBy', 'findOneBy', 'findAll'])){
 			$usedColumns = $this->getUsedColumns($node->args);
-			$notIndexedColumns = $this->metadataService->nonIndexedColums($entityClass, array_keys($usedColumns));
-
-			foreach ($notIndexedColumns as $notIndexedColumn){
-				$token = $usedColumns[$notIndexedColumn];
-
-				$errors[] = RuleErrorBuilder::message(sprintf(
-					'Found column "%s" of entity "%s" which is not indexed.',
-					$notIndexedColumn,
-					$entityClass,
-				))
-					->identifier(self::RULE_IDENTIFIER)
-					->line($token->getLine())
-					->build()
-				;
-			}
+			return [$entityClass, array_keys($usedColumns), $node->getLine()];
 		} else {
 			// It's a magic doctrine method
 			$field = str_replace('findBy', '', str_replace('findOneBy', '', $methodName));
 			$field[0] = strtolower($field[0]);
 
-			$notIndexedColumns = $this->metadataService->nonIndexedColums($entityClass, [$field]);
-			foreach ($notIndexedColumns as $column) {
-				$errors[] = RuleErrorBuilder::message(sprintf(
-					'Found column "%s" of entity "%s" which is not indexed.',
-					$field,
-					$entityClass,
-				))
-					->identifier(self::RULE_IDENTIFIER)
-					->line($node->getLine())
-					->build()
-				;
-			}
+			return [$entityClass, array_keys($usedColumns), $node->getLine()];
 		}
-
-		return $errors;
 	}
 
 	/**

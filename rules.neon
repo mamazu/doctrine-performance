@@ -1,6 +1,5 @@
 rules:
-	- Mamazu\DoctrinePerformance\Rules\DoctrineRepositoryRule
-	- Mamazu\DoctrinePerformance\Rules\DoctrineQueryBuilderRule
+	- Mamazu\DoctrinePerformance\Rules\NonIndexedColumnsRule
 
 services:
 	-
@@ -14,14 +13,17 @@ services:
 		arguments:
 			loader: '@Mamazu\DoctrinePerformance\Services\EntityManagerLoader'
 	-
-		class: 'Mamazu\DoctrinePerformance\Rules\DoctrineRepositoryRule'
+		class: 'Mamazu\DoctrinePerformance\Collectors\DoctrineRepositoryCollector'
 		arguments:
 			entityClassFinder: '@Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName'
 			metadataService: '@Mamazu\DoctrinePerformance\Services\MetadataService'
-		tags: [ 'phpstan.rules.rule' ]
+		tags: [ 'phpstan.collector' ]
 	-
-		class: 'Mamazu\DoctrinePerformance\Rules\DoctrineQueryBuilderRule'
+		class: 'Mamazu\DoctrinePerformance\Collectors\DoctrineQueryBuilderCollector'
 		arguments:
 			entityClassFinder: '@Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName'
 			metadataService: '@Mamazu\DoctrinePerformance\Services\MetadataService'
+		tags: [ 'phpstan.collector' ]
+	-
+		class: 'Mamazu\DoctrinePerformance\Rules\NonIndexedColumnsRule'
 		tags: [ 'phpstan.rules.rule' ]
