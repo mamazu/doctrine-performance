@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace Test\Mamazu\DoctrinePerformance\Rules;
 
-use Doctrine\DBAL\DriverManager;
-use Doctrine\ORM\EntityManager;
-use Doctrine\ORM\ORMSetup;
 use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
 use Mamazu\DoctrinePerformance\Rules\DoctrineRepositoryRule;
 use Mamazu\DoctrinePerformance\Services\MetadataService;

@@ -10,6 +10,6 @@ use Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities\Books;
 /*
  * @extends EntityRepository<Books>
  */
-class ExtendingRepository extends
+class ExtendingRepository extends EntityRepository
 {
 }

@@ -2,33 +2,33 @@
 
 declare(strict_types=1);
 
-namespace Mamazu\DoctrinePerformance\Rules;
+namespace Mamazu\DoctrinePerformance\Collectors;
 
 use Generator;
 use Mamazu\DoctrinePerformance\Errors\ErrorMessage;
 use Mamazu\DoctrinePerformance\Helper\AliasMap;
 use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
-use Mamazu\DoctrinePerformance\Helper\Result;
 use Mamazu\DoctrinePerformance\Helper\UnwrapValue;
+use Mamazu\DoctrinePerformance\Rules\NonIndexedColumnsRule;
 use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PhpParser\Node;
-use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Scalar\String_;
 use PHPStan\Analyser\Scope;
+use PHPStan\Collectors\Collector;
 use PHPStan\Rules\Rule;
 use PHPStan\Rules\RuleErrorBuilder;
-use PHPStan\Type\UnionType;
 use PHPStan\Type\MixedType;
-use PHPStan\Type\ThisType;
-use PHPStan\Type\VerbosityLevel;
 use PHPStan\Type\ObjectType;
-
+use PHPStan\Type\ThisType;
+use PHPStan\Type\UnionType;
+use PHPStan\Type\VerbosityLevel;
 /**
  * @implements Rule<MethodCall>
+ * @phpstan-import-type NonIndexedColumData from NonIndexedColumnsRule
  */
-class DoctrineQueryBuilderRule implements Rule
+class DoctrineQueryBuilderCollector implements Collector
 {
 	private const RULE_IDENTIFIER = 'doctrine.queryBuilder.performance';
 
@@ -50,56 +50,54 @@ class DoctrineQueryBuilderRule implements Rule
 
 	/**
 	 * @param MethodCall $node
+	 *
+	 * @return NonIndexedColumData
 	 */
-	public function processNode(Node $node, Scope $scope): array
+	public function processNode(Node $node, Scope $scope): ?array
 	{
+		// Ignore all non where, orWhere, andWhere methods
 		if (! $node->name instanceof Node\Identifier || (stripos((string) $node->name, 'where')) === false) {
-			return [];
+			return null;
 		}
 
 		// Get the type of the object the method is called on
 		$calledOnType = $scope->getType($node->var);
 
 		if ($calledOnType instanceof ThisType || $calledOnType instanceof MixedType || $calledOnType instanceof UnionType) {
-			return [];
+			return null;
 		}
 
-		// Doctrine\ORM\QueryBuilder or Doctrine\DBAL\Query\QueryBuilder
+		// Check if its a queryBuilder (Doctrine\ORM\QueryBuilder or Doctrine\DBAL\Query\QueryBuilder)
 		if ($calledOnType->isInstanceOf('Doctrine\ORM\QueryBuilder')->no() &&
 			$calledOnType->isInstanceOf('Doctrine\DBAL\Query\QueryBuilder')
 				->no()) {
-			return [];
+			return null;
 		}
 
 		try {
 			$aliasMap = $this->getAliasMap($node, $scope);
 		} catch (ErrorMessage $error) {
-			return [
-				RuleErrorBuilder::message($error->getMessage())
-					->identifier(self::RULE_IDENTIFIER_NO_ENTITY_FOUND)
-					->build(),
-			];
+			return null;
+				//RuleErrorBuilder::message($error->getMessage())
+					//->identifier(self::RULE_IDENTIFIER_NO_ENTITY_FOUND)
+					//->build(),
 		}
 
 		// Extract Expression from method call
-		$queryString = $node->getArgs()[0]->value;
-		if (!$queryString instanceof String_) {
-			return [
-				RuleErrorBuilder::message('Non constant strings in where method is not supported.')
-					->identifier(self::RULE_IDENTIFIER_NOT_SUPPORTED)
-					->build(),
-			];
+		$argument = $node->getArgs()[0];
+		$queryString = $argument->value;
+		if (! $queryString instanceof String_) {
+			return null;
+				//RuleErrorBuilder::message('Non constant strings in where method is not supported.')
+					//->identifier(self::RULE_IDENTIFIER_NOT_SUPPORTED)
+					//->build(),
 		}
 
-		$error = [];
-		foreach ($this->parseArgumentAndRetunUnindexedColumns($aliasMap, $queryString->value) as [$className, $property]) {
-			$error[] = RuleErrorBuilder::message('Column not indexed: ' . $className . '::' . $property)
-					->identifier(self::RULE_IDENTIFIER)
-					->build()
-			;
+		$errors = [];
+		foreach ($this->parseArgumentAndRetunUnindexedColumns($aliasMap, $queryString->value) as $className => $fields) {
+			$errors[] = [$className, $fields, $argument->getLine()];
 		}
-
-		return $error;
+		return $errors;
 	}
 
 	private function getCallFromChain(Node $node, string $name): ?MethodCall
@@ -116,7 +114,8 @@ class DoctrineQueryBuilderRule implements Rule
 	}
 
 	private function getEntityClass(AliasMap $aliasMap, Scope $scope, MethodCall $methodCall): AliasMap {
-		$entityArgument = $methodCall->getArgs()[0]->value;
+		$entityArgument = $methodCall->getArgs()[0]
+			->value;
 		if ($entityArgument instanceof PropertyFetch) {
 			if (((string) $entityArgument->getName) === '_entityName') {
 				$entityType = $this->entityClassFinder->getEntityClassName($entityArgument->getStaticObjectType());
@@ -133,7 +132,8 @@ class DoctrineQueryBuilderRule implements Rule
 			}
 		}
 
-		$aliasArgument = $methodCall->getArgs()[1]->value;
+		$aliasArgument = $methodCall->getArgs()[1]
+			->value;
 		$alias = UnwrapValue::string($aliasArgument, $scope) ?? 'o';
 
 		$aliasMap->addAlias($alias, $className);
@@ -141,8 +141,8 @@ class DoctrineQueryBuilderRule implements Rule
 	}
 
 	/**
-	 * @return Generator<class-string, string>
-	*/
+	 * @return Generator<class-string, array<string>>
+	 */
 	private function parseArgumentAndRetunUnindexedColumns(AliasMap $aliasMapping, string $queryString): \Generator
 	{
 		$usedColumns = [];
@@ -165,7 +165,7 @@ class DoctrineQueryBuilderRule implements Rule
 
 		$unusedColumns = [];
 		foreach ($usedColumns as $alias => $fields) {
-			if (!$aliasMapping->has($alias)) {
+			if (! $aliasMapping->has($alias)) {
 				continue;
 				// This should not happen.
 				throw new \InvalidArgumentException(sprintf(
@@ -176,13 +176,7 @@ class DoctrineQueryBuilderRule implements Rule
 			}
 
 			$className = $aliasMapping->getAlias($alias);
-			if ($this->metadataService->shouldEntityBeSkipped($className)) {
-				continue;
-			}
-
-			foreach ($this->metadataService->nonIndexedColums($className, $fields) as $nonIndexedColumn) {
-				yield $className => $nonIndexedColumn;
-			}
+			yield $className => $fields;
 		}
 	}
 
@@ -208,7 +202,9 @@ class DoctrineQueryBuilderRule implements Rule
 				if ($entityType instanceof ObjectType) {
 					$aliasMap->addAlias($aliasName, $entityType->getClassName());
 				} else {
-					throw new ErrorMessage('Could not determine repository type from: ' . $left->getStaticObjectType()->describe(VerbosityLevel::typeOnly()));
+					throw new ErrorMessage('Could not determine repository type from: ' . $left->getStaticObjectType()->describe(
+						VerbosityLevel::typeOnly()
+					));
 				}
 			}
 			return $aliasMap;

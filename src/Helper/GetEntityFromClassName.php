@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Mamazu\DoctrinePerformance\Helper;
 
+use Doctrine\Persistence\ObjectRepository;
 use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Type\Generic\GenericObjectType;
 use PHPStan\Type\ObjectType;
-use Doctrine\Persistence\ObjectRepository;
-use PHPStan\Type\VerbosityLevel;
 
 class GetEntityFromClassName
 {
@@ -20,13 +19,12 @@ class GetEntityFromClassName
 	{
 		if ($repositoryType instanceof GenericObjectType) {
 			$entityType = $repositoryType->getTypes()[0];
-			if (!$entityType instanceof ObjectType) {
+			if (! $entityType instanceof ObjectType) {
 				return null;
 			}
 
 			return $entityType;
 		}
-
 
 		$repositoryReflection = $this->reflectionProvider
 			->getClass($repositoryType->getClassName())
