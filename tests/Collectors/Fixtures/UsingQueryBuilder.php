@@ -7,7 +7,6 @@ namespace Test\Mamazu\DoctrinePerformance\Collectors\Fixtures;
 use Doctrine\ORM\EntityManagerInterface;
 use Test\Mamazu\DoctrinePerformance\Collectors\Fixtures\Entities\Books;
 use Test\Mamazu\DoctrinePerformance\Collectors\Fixtures\Entities\Settings;
-use Doctrine\ORM\EntityRepository;
 
 class UsingQueryBuilder
 {

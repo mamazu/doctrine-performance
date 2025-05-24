@@ -21,7 +21,8 @@ use PHPStan\Rules\Rule;
 use PHPStan\Type\UnionType;
 use PHPStan\Type\MixedType;
 use PHPStan\Type\ObjectType;
-
+use PHPStan\Type\ThisType;
+use PHPStan\Type\VerbosityLevel;
 /**
  * @implements Rule<MethodCall>
  * @phpstan-import-type NonIndexedColumData from NonIndexedColumnsRule
@@ -93,7 +94,7 @@ class DoctrineQueryBuilderCollector implements Collector
 
 		$errors = [];
 		foreach ($this->parseArgumentAndRetunUnindexedColumns($aliasMap, $queryString->value) as $className => $fields) {
-			$errors[] = [$className, $fields, $argument->getLine()];
+			$errors[] = ['entityClass' => $className, 'properties' => $fields, 'lineNumber' => $argument->getLine()];
 		}
 		return $errors;
 	}

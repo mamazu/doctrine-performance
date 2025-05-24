@@ -7,6 +7,9 @@ use PHPStan\Testing\RuleTestCase;
 use PHPStan\Rules\Rule;
 use Test\Mamazu\DoctrinePerformance\TestEntityManagerLoader;
 
+/**
+ * @extends RuleTestCase<NonIndexedColumnsRule>
+*/
 class DoctrineQueryBuilderCollectorTest extends RuleTestCase
 {
 	protected function getRule(): Rule
@@ -39,8 +42,8 @@ class DoctrineQueryBuilderCollectorTest extends RuleTestCase
 	{
 		$this->analyse([__DIR__ . '/Fixtures/ExtendingRepository.php'], [
 			[
-				'Found column "author" of entity "Test\Mamazu\DoctrinePerformance\Collectors\Fixtures\Entities\Books" which is not indexed.',
-				37,
+				'Found column "nonIndexed" of entity "Test\Mamazu\DoctrinePerformance\Collectors\Fixtures\Entities\Books" which is not indexed.',
+				18,
 			],
 		]);
 	}

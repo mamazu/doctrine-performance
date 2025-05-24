@@ -97,13 +97,13 @@ class DoctrineRepositoryCollector implements Collector
 
 		if (in_array($methodName, ['findBy', 'findOneBy', 'findAll'])){
 			$usedColumns = $this->getUsedColumns($node->args);
-			return [$entityClass, array_keys($usedColumns), $node->getLine()];
+			return ['entityClass' => $entityClass, 'properties' => array_keys($usedColumns), 'lineNumber' => $node->getLine()];
 		} else {
 			// It's a magic doctrine method
 			$field = str_replace('findBy', '', str_replace('findOneBy', '', $methodName));
 			$field[0] = strtolower($field[0]);
 
-			return [$entityClass, array_keys($usedColumns), $node->getLine()];
+			return ['entityClass' => $entityClass, 'properties' => array_keys($usedColumns), 'lineNumber' => $node->getLine()];
 		}
 	}
 

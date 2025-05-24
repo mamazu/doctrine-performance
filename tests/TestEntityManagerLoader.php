@@ -14,7 +14,7 @@ class TestEntityManagerLoader implements EntityManagerLoaderInterface
 {
 	public function getEntityManager(): EntityManagerInterface {
 		$config = ORMSetup::createAttributeMetadataConfiguration(
-			paths: [__DIR__ . '/Rules/Fixtures/Entities'],
+			paths: [__DIR__ . '/Collectors/Fixtures/Entities'],
 			isDevMode: true,
 		);
 		$connection = DriverManager::getConnection([

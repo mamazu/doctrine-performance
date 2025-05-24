@@ -17,7 +17,9 @@ class EntityManagerLoader implements EntityManagerLoaderInterface
 
 	public function getEntityManager(): EntityManagerInterface {
 		if (! isset($this->entityManager)) {
-			$this->entityManager = require $this->path;
+			$entityManager = require $this->path;
+			assert($entityManager instanceof EntityManagerInterface);
+			$this->entityManager = $entityManager;
 		}
 
 		return $this->entityManager;
