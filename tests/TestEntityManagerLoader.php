@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Test\Mamazu\DoctrinePerformance;
 
-use Doctrine\ORM\EntityManager;
 use Doctrine\DBAL\DriverManager;
+use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\ORMSetup;
 use Mamazu\DoctrinePerformance\Services\EntityManagerLoaderInterface;
@@ -21,6 +21,6 @@ class TestEntityManagerLoader implements EntityManagerLoaderInterface
 			'driver' => 'pdo_sqlite',
 			'path' => __DIR__ . '/Rules/db.sqlite',
 		], $config);
-		return new EntityManager( $connection, $config);
+		return new EntityManager($connection, $config);
 	}
 }

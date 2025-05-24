@@ -6,7 +6,9 @@ namespace Mamazu\DoctrinePerformance\Helper;
 
 class AliasMap
 {
-	/** @var array<string, string> */
+	/**
+	 * @var array<string, string>
+	 */
 	private array $aliasMap = [];
 
 	public function addAlias(string $alias, string $className): void

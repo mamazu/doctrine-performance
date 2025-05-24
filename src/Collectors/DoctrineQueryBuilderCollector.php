@@ -9,18 +9,18 @@ use Mamazu\DoctrinePerformance\Errors\ErrorMessage;
 use Mamazu\DoctrinePerformance\Helper\AliasMap;
 use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
 use Mamazu\DoctrinePerformance\Helper\UnwrapValue;
+use Mamazu\DoctrinePerformance\Rules\NonIndexedColumnsRule;
+use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Scalar\String_;
 use PHPStan\Analyser\Scope;
+use PHPStan\Collectors\Collector;
 use PHPStan\Rules\Rule;
 use PHPStan\Type\UnionType;
 use PHPStan\Type\MixedType;
-use PHPStan\Type\ThisType;
-use PHPStan\Type\VerbosityLevel;
 use PHPStan\Type\ObjectType;
-use PHPStan\Collectors\Collector;
 
 /**
  * @implements Rule<MethodCall>
@@ -84,7 +84,7 @@ class DoctrineQueryBuilderCollector implements Collector
 		// Extract Expression from method call
 		$argument = $node->getArgs()[0];
 		$queryString = $argument->value;
-		if (!$queryString instanceof String_) {
+		if (! $queryString instanceof String_) {
 			return null;
 				//RuleErrorBuilder::message('Non constant strings in where method is not supported.')
 					//->identifier(self::RULE_IDENTIFIER_NOT_SUPPORTED)
@@ -112,7 +112,8 @@ class DoctrineQueryBuilderCollector implements Collector
 	}
 
 	private function getEntityClass(AliasMap $aliasMap, Scope $scope, MethodCall $methodCall): AliasMap {
-		$entityArgument = $methodCall->getArgs()[0]->value;
+		$entityArgument = $methodCall->getArgs()[0]
+			->value;
 		if ($entityArgument instanceof PropertyFetch) {
 			if (((string) $entityArgument->getName) === '_entityName') {
 				$entityType = $this->entityClassFinder->getEntityClassName($entityArgument->getStaticObjectType());
@@ -129,7 +130,8 @@ class DoctrineQueryBuilderCollector implements Collector
 			}
 		}
 
-		$aliasArgument = $methodCall->getArgs()[1]->value;
+		$aliasArgument = $methodCall->getArgs()[1]
+			->value;
 		$alias = UnwrapValue::string($aliasArgument, $scope) ?? 'o';
 
 		$aliasMap->addAlias($alias, $className);
@@ -138,7 +140,7 @@ class DoctrineQueryBuilderCollector implements Collector
 
 	/**
 	 * @return Generator<class-string, array<string>>
-	*/
+	 */
 	private function parseArgumentAndRetunUnindexedColumns(AliasMap $aliasMapping, string $queryString): \Generator
 	{
 		$usedColumns = [];
@@ -161,7 +163,7 @@ class DoctrineQueryBuilderCollector implements Collector
 
 		$unusedColumns = [];
 		foreach ($usedColumns as $alias => $fields) {
-			if (!$aliasMapping->has($alias)) {
+			if (! $aliasMapping->has($alias)) {
 				continue;
 				// This should not happen.
 				throw new \InvalidArgumentException(sprintf(
@@ -200,7 +202,9 @@ class DoctrineQueryBuilderCollector implements Collector
 				if ($entityType instanceof ObjectType) {
 					$aliasMap->addAlias($aliasName, $entityType->getClassName());
 				} else {
-					throw new ErrorMessage('Could not determine repository type from: ' . $left->getStaticObjectType()->describe(VerbosityLevel::typeOnly()));
+					throw new ErrorMessage('Could not determine repository type from: ' . $left->getStaticObjectType()->describe(
+						VerbosityLevel::typeOnly()
+					));
 				}
 			} else {
 				throw new ErrorMessage('Unable to determine type of dynamic repository');

@@ -22,7 +22,7 @@ class GetEntityFromClassName
 	{
 		if ($repositoryType instanceof GenericObjectType) {
 			$entityType = $repositoryType->getTypes()[0];
-			if (!$entityType instanceof ObjectType) {
+			if (! $entityType instanceof ObjectType) {
 				return null;
 			}
 

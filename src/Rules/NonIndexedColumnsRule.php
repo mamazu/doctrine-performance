@@ -6,16 +6,18 @@ namespace Mamazu\DoctrinePerformance\Rules;
 
 use Mamazu\DoctrinePerformance\Collectors\DoctrineQueryBuilderCollector;
 use Mamazu\DoctrinePerformance\Services\MetadataService;
-use PHPStan\Rules\Rule;
-use PHPStan\Rules\RuleErrorBuilder;
-use PHPStan\Node\CollectedDataNode;
 use PhpParser\Node;
 use PHPStan\Analyser\Scope;
+use PHPStan\Node\CollectedDataNode;
+use PHPStan\Rules\Rule;
+use PHPStan\Rules\RuleErrorBuilder;
 
 /** @phpstan-type NonIndexedColumnData array{entityClass: string, properties: array<string>, lineNumber: int} */
 class NonIndexedColumnsRule implements Rule
 {
-	public function __construct(private readonly MetadataService $metadataService) {}
+	public function __construct(
+		private readonly MetadataService $metadataService
+	) {}
 
 	public function getNodeType(): string
 	{
@@ -35,7 +37,7 @@ class NonIndexedColumnsRule implements Rule
 
 					$fields = $error[1];
 
-					$unindexedFields= $this->metadataService->nonIndexedColums($entityClass, $fields);
+					$unindexedFields = $this->metadataService->nonIndexedColums($entityClass, $fields);
 					foreach ($unindexedFields as $field) {
 						$errors[] = RuleErrorBuilder::message(sprintf(
 							'Found column "%s" of entity "%s" which is not indexed.',
