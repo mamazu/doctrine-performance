@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Test\Mamazu\DoctrinePerformance\Rules\Fixtures;
+namespace Test\Mamazu\DoctrinePerformance\Collectors\Fixtures;
 
 use DateTimeImmutable;
 use Doctrine\Persistence\ObjectRepository;
-use Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities\Books;
+use Test\Mamazu\DoctrinePerformance\Collectors\Fixtures\Entities\Books;
 
-class ExampleRepository
+class UsingRepositoryMethods
 {
 	/**
 	 * @param ObjectRepository<Books> $repository

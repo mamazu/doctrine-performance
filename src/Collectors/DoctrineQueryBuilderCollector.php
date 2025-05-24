@@ -9,22 +9,19 @@ use Mamazu\DoctrinePerformance\Errors\ErrorMessage;
 use Mamazu\DoctrinePerformance\Helper\AliasMap;
 use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
 use Mamazu\DoctrinePerformance\Helper\UnwrapValue;
-use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PhpParser\Node;
-use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Scalar\String_;
 use PHPStan\Analyser\Scope;
 use PHPStan\Rules\Rule;
-use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\UnionType;
 use PHPStan\Type\MixedType;
 use PHPStan\Type\ThisType;
 use PHPStan\Type\VerbosityLevel;
 use PHPStan\Type\ObjectType;
 use PHPStan\Collectors\Collector;
-use Mamazu\DoctrinePerformance\Rules\NonIndexedColumnsRule;
+
 /**
  * @implements Rule<MethodCall>
  * @phpstan-import-type NonIndexedColumData from NonIndexedColumnsRule
@@ -41,7 +38,6 @@ class DoctrineQueryBuilderCollector implements Collector
 
 	public function __construct(
 		private GetEntityFromClassName $entityClassFinder,
-		private MetadataService $metadataService
 	) {}
 
 	public function getNodeType(): string
@@ -78,6 +74,7 @@ class DoctrineQueryBuilderCollector implements Collector
 		try {
 			$aliasMap = $this->getAliasMap($node, $scope);
 		} catch (ErrorMessage $error) {
+			var_dump($error->getMessage());
 			return null;
 				//RuleErrorBuilder::message($error->getMessage())
 					//->identifier(self::RULE_IDENTIFIER_NO_ENTITY_FOUND)
@@ -190,11 +187,13 @@ class DoctrineQueryBuilderCollector implements Collector
 
 		$methodCall = $this->getCallFromChain($currentNode->var, 'createQueryBuilder');
 		if ($methodCall instanceof MethodCall) {
+			// First argument is the alias name
 			$aliasName = UnwrapValue::string($methodCall->getArgs()[0]->value, $scope);
 			if ($aliasName === null) {
 				throw new ErrorMessage('Variable arguments for aliases are not supported.');
 			}
 
+			// Get the class name of the entity
 			$left = $scope->getType($methodCall->var);
 			if ($left instanceof ThisType) {
 				$entityType = $this->entityClassFinder->getEntityClassName($left->getStaticObjectType());
@@ -203,6 +202,8 @@ class DoctrineQueryBuilderCollector implements Collector
 				} else {
 					throw new ErrorMessage('Could not determine repository type from: ' . $left->getStaticObjectType()->describe(VerbosityLevel::typeOnly()));
 				}
+			} else {
+				throw new ErrorMessage('Unable to determine type of dynamic repository');
 			}
 			return $aliasMap;
 		}

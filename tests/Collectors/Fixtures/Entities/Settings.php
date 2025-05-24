@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities;
+namespace Test\Mamazu\DoctrinePerformance\Collectors\Fixtures\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
 use Mamazu\DoctrinePerformance\Attributes\SmallTable;

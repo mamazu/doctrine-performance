@@ -24,10 +24,10 @@ class AliasMap
 		return array_key_exists($alias, $this->aliasMap);
 	}
 
-    /**
-     * @return string[]
-     */
-    public function getAliases(): array
+	/**
+	 * @return string[]
+	 */
+	public function getAliases(): array
 	{
 		return array_keys($this->aliasMap);
 	}

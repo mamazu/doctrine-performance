@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Mamazu\DoctrinePerformance\Helper;
 
+use PHPStan\Type\VerbosityLevel;
 use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Type\Generic\GenericObjectType;
 use PHPStan\Type\ObjectType;
 use Doctrine\Persistence\ObjectRepository;
-use PHPStan\Type\VerbosityLevel;
+use Doctrine\ORM\EntityRepository;
+use PHPStan\Type\Generic\TemplateTypeMap;
 
 class GetEntityFromClassName
 {
@@ -28,22 +30,23 @@ class GetEntityFromClassName
 		}
 
 
-		$repositoryReflection = $this->reflectionProvider
+		$genericReflection = $this->reflectionProvider
 			->getClass($repositoryType->getClassName())
 			->getAncestorWithClassName(ObjectRepository::class);
 
-		if ($repositoryReflection === null) {
+		if ($genericReflection === null) {
 			return null;
 		}
 
-		$type = $repositoryReflection
-			->getActiveTemplateTypeMap()
-			->getType('TEntityClass')
-		;
+		return $this->getTemplateArgument($genericReflection->getActiveTemplateTypeMap());
+	}
 
-		if (! $type instanceof ObjectType) {
-			return null;
+	private function getTemplateArgument(TemplateTypeMap $typeMap) {
+		$type = reset($typeMap->getTypes());
+		if ($type instanceof ObjectType) {
+			return $type;
 		}
-		return $type;
+
+		return null;
 	}
 }

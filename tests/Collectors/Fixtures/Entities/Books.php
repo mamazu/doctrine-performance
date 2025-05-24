@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities;
+namespace Test\Mamazu\DoctrinePerformance\Collectors\Fixtures\Entities;
 
 use DatetimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
@@ -27,6 +27,9 @@ class Books
 
 	#[ORM\Column(type: 'string')]
 	public string $genre;
+
+	#[ORM\Column(type: 'string')]
+	public string $nonIndexed;
 
 	#[ORM\Column(type: 'datetime_immutable')]
 	public DatetimeImmutable $publishDate;

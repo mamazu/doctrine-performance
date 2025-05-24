@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Test\Mamazu\DoctrinePerformance\Rules\Fixtures;
+namespace Test\Mamazu\DoctrinePerformance\Collectors\Fixtures;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities\Books;
-use Test\Mamazu\DoctrinePerformance\Rules\Fixtures\Entities\Settings;
+use Test\Mamazu\DoctrinePerformance\Collectors\Fixtures\Entities\Books;
+use Test\Mamazu\DoctrinePerformance\Collectors\Fixtures\Entities\Settings;
+use Doctrine\ORM\EntityRepository;
 
-class ExampleController
+class UsingQueryBuilder
 {
 	public function __construct(
 		private EntityManagerInterface $entityManager
@@ -26,10 +27,14 @@ class ExampleController
 			->orWhere('u.title')
 		;
 
-		// This should complain because there is no mapping on that entity for the title field
 		$qb
 			->from(Settings::class, 's')
-			->andWhere('s.title')
+			->andWhere('s.key')
+		;
+
+		$qb
+			->from(Books::class, 'b')
+			->where('b.author')
 		;
 	}
 }
