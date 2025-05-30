@@ -6,11 +6,10 @@ namespace Mamazu\DoctrinePerformance\Collectors;
 
 use Generator;
 use Mamazu\DoctrinePerformance\Errors\ErrorMessage;
+use Mamazu\DoctrinePerformance\Errors\ErrorTrait;
 use Mamazu\DoctrinePerformance\Helper\AliasMap;
 use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
 use Mamazu\DoctrinePerformance\Helper\UnwrapValue;
-use Mamazu\DoctrinePerformance\Rules\NonIndexedColumnsRule;
-use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\PropertyFetch;
@@ -18,10 +17,10 @@ use PhpParser\Node\Scalar\String_;
 use PHPStan\Analyser\Scope;
 use PHPStan\Collectors\Collector;
 use PHPStan\Rules\Rule;
-use PHPStan\Type\UnionType;
 use PHPStan\Type\MixedType;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\ThisType;
+use PHPStan\Type\UnionType;
 use PHPStan\Type\VerbosityLevel;
 /**
  * @implements Rule<MethodCall>
@@ -29,7 +28,7 @@ use PHPStan\Type\VerbosityLevel;
  */
 class DoctrineQueryBuilderCollector implements Collector
 {
-	private const RULE_IDENTIFIER = 'doctrine.queryBuilder.performance';
+	use ErrorTrait;
 
 	// Issued when the argument of the where expression is not a string constant
 	private const RULE_IDENTIFIER_NOT_SUPPORTED = 'doctrine.queryBuilder.performance.nonStringWhere';
@@ -39,6 +38,7 @@ class DoctrineQueryBuilderCollector implements Collector
 
 	public function __construct(
 		private GetEntityFromClassName $entityClassFinder,
+		private bool $reportTooDynamic,
 	) {}
 
 	public function getNodeType(): string
@@ -75,26 +75,35 @@ class DoctrineQueryBuilderCollector implements Collector
 		try {
 			$aliasMap = $this->getAliasMap($node, $scope);
 		} catch (ErrorMessage $error) {
-			var_dump($error->getMessage());
-			return null;
-				//RuleErrorBuilder::message($error->getMessage())
-					//->identifier(self::RULE_IDENTIFIER_NO_ENTITY_FOUND)
-					//->build(),
+			$result = [];
+			if ($this->reportTooDynamic) {
+				$result = [
+					'message' => $error->getMessage() . '@' . $node->getLine() . ':' . $node->getStartTokenPos(),
+					'identifier' => self::RULE_IDENTIFIER_NO_ENTITY_FOUND,
+					'line' => $error->getCode(),
+				];
+			}
+			return $result;
 		}
 
 		// Extract Expression from method call
 		$argument = $node->getArgs()[0];
 		$queryString = $argument->value;
 		if (! $queryString instanceof String_) {
-			return null;
-				//RuleErrorBuilder::message('Non constant strings in where method is not supported.')
-					//->identifier(self::RULE_IDENTIFIER_NOT_SUPPORTED)
-					//->build(),
+			$result = [];
+			if ($this->reportTooDynamic) {
+				$result = [
+					'message' => 'Non constant strings in where method is not supported.',
+					'identifier' => self::RULE_IDENTIFIER_NOT_SUPPORTED,
+					'line' => $argument->getLine(),
+				];
+			}
+			return $result;
 		}
 
 		$errors = [];
-		foreach ($this->parseArgumentAndRetunUnindexedColumns($aliasMap, $queryString->value) as $className => $fields) {
-			$errors[] = ['entityClass' => $className, 'properties' => $fields, 'lineNumber' => $argument->getLine()];
+		foreach ($this->parseArgumentAndRetunUnindexedColumns($aliasMap, $queryString->value) as $entityClass => $fields) {
+			$errors[] = self::nonIndexedColumnError($entityClass, $fields, $argument->getLine());
 		}
 		return $errors;
 	}
@@ -191,28 +200,34 @@ class DoctrineQueryBuilderCollector implements Collector
 		$methodCall = $this->getCallFromChain($currentNode->var, 'createQueryBuilder');
 		if ($methodCall instanceof MethodCall) {
 			// First argument is the alias name
-			$aliasName = UnwrapValue::string($methodCall->getArgs()[0]->value, $scope);
+			$argument = $methodCall->getArgs()[0];
+			$aliasName = UnwrapValue::string($argument->value, $scope);
 			if ($aliasName === null) {
-				throw new ErrorMessage('Variable arguments for aliases are not supported.');
+				throw new ErrorMessage('Variable arguments for aliases are not supported.', $argument->getLine());
 			}
 
 			// Get the class name of the entity
 			$left = $scope->getType($methodCall->var);
 			if ($left instanceof ThisType) {
-				$entityType = $this->entityClassFinder->getEntityClassName($left->getStaticObjectType());
+				$staticType = $left->getStaticObjectType();
+				$entityType = $this->entityClassFinder->getEntityClassName($staticType);
 				if ($entityType instanceof ObjectType) {
 					$aliasMap->addAlias($aliasName, $entityType->getClassName());
 				} else {
-					throw new ErrorMessage('Could not determine repository type from: ' . $left->getStaticObjectType()->describe(
-						VerbosityLevel::typeOnly()
-					));
+					throw new ErrorMessage(
+						'Could not determine repository type from: ' . $staticType->describe(VerbosityLevel::typeOnly()),
+						$methodCall->getLine()
+					);
 				}
 			} else {
-				throw new ErrorMessage('Unable to determine type of dynamic repository');
+				throw new ErrorMessage('Unable to determine type of dynamic repository', $methodCall->getLine());
 			}
 			return $aliasMap;
 		}
 
-		throw new ErrorMessage('Could not find source entity from "from" or "createQueryBuilder" methods');
+		throw new ErrorMessage(
+			'Could not find source entity from "from" or "createQueryBuilder" methods',
+			$currentNode->getLine(),
+		);
 	}
 }

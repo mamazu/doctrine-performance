@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace Mamazu\DoctrinePerformance\Helper;
 
-use PHPStan\Type\VerbosityLevel;
+use Doctrine\Persistence\ObjectRepository;
 use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Type\Generic\GenericObjectType;
-use PHPStan\Type\ObjectType;
-use Doctrine\Persistence\ObjectRepository;
-use Doctrine\ORM\EntityRepository;
 use PHPStan\Type\Generic\TemplateTypeMap;
+use PHPStan\Type\ObjectType;
 
 class GetEntityFromClassName
 {
@@ -28,7 +26,6 @@ class GetEntityFromClassName
 
 			return $entityType;
 		}
-
 
 		$genericReflection = $this->reflectionProvider
 			->getClass($repositoryType->getClassName())

@@ -1,3 +1,12 @@
+parameters:
+	doctrine_performance:
+		reportTooDynamic: false
+
+parametersSchema:
+	doctrine_performance: structure([
+		reportTooDynamic: bool()
+	])
+
 rules:
 	- Mamazu\DoctrinePerformance\Rules\NonIndexedColumnsRule
 
@@ -16,13 +25,12 @@ services:
 		class: 'Mamazu\DoctrinePerformance\Collectors\DoctrineRepositoryCollector'
 		arguments:
 			entityClassFinder: '@Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName'
-			metadataService: '@Mamazu\DoctrinePerformance\Services\MetadataService'
 		tags: [ 'phpstan.collector' ]
 	-
 		class: 'Mamazu\DoctrinePerformance\Collectors\DoctrineQueryBuilderCollector'
 		arguments:
 			entityClassFinder: '@Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName'
-			metadataService: '@Mamazu\DoctrinePerformance\Services\MetadataService'
+			reportTooDynamic: %doctrine_performance.reportTooDynamic%
 		tags: [ 'phpstan.collector' ]
 	-
 		class: 'Mamazu\DoctrinePerformance\Rules\NonIndexedColumnsRule'

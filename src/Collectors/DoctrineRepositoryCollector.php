@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Mamazu\DoctrinePerformance\Collectors;
 
 use Doctrine\Persistence\ObjectRepository;
+use Mamazu\DoctrinePerformance\Errors\ErrorTrait;
 use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
-use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\ArrayItem;
@@ -14,8 +14,6 @@ use PhpParser\Node\Expr\Array_;
 use PhpParser\Node\Expr\MethodCall;
 use PHPStan\Analyser\Scope;
 use PHPStan\Collectors\Collector;
-use PHPStan\Rules\Rule;
-use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\ErrorType;
 use PHPStan\Type\IntersectionType;
 use PHPStan\Type\MixedType;
@@ -33,11 +31,12 @@ use PHPStan\Type\VerbosityLevel;
  */
 class DoctrineRepositoryCollector implements Collector
 {
+	use ErrorTrait;
+
 	private const RULE_IDENTIFIER = 'doctrine.repository.performance';
 
 	public function __construct(
 		private GetEntityFromClassName $entityClassFinder,
-		private MetadataService $metadataService,
 	) {}
 
 	public function getNodeType(): string
@@ -82,28 +81,25 @@ class DoctrineRepositoryCollector implements Collector
 		// Checking for Repository vs Repository<Entity>
 		$entityType = $this->entityClassFinder->getEntityClassName($repositoryType);
 		if ($entityType === null) {
-			return null;
-				//RuleErrorBuilder::message(
-					//'Found ' . $repositoryType->describe(VerbosityLevel::typeOnly()) . ' but could not determine type of its entity'
-				//)
-					//->identifier(self::RULE_IDENTIFIER . '.unknownRepo')
-					//->tip('Use something like /** @var ObjectRepository<Entity> */ to denote the entity of the repository')
-					//->line($node->getLine())
-					//->build(),
-			//];
+			return [self::genericError(
+				'Could not determine entity type on: ' . $repositoryType->describe(VerbosityLevel::typeOnly()),
+				 self::RULE_IDENTIFIER . '.unknownRepo',
+				$node->getLine(),
+				'Use something like /** @var ObjectRepository<Entity> */ to denote the entity of the repository',
+			)];
 		}
 
 		$entityClass = $entityType->getClassName();
 
 		if (in_array($methodName, ['findBy', 'findOneBy', 'findAll'])){
 			$usedColumns = $this->getUsedColumns($node->args);
-			return ['entityClass' => $entityClass, 'properties' => array_keys($usedColumns), 'lineNumber' => $node->getLine()];
+			return [self::nonIndexedColumnError($entityClass, array_keys($usedColumns), $node->getLine())];
 		} else {
 			// It's a magic doctrine method
 			$field = str_replace('findBy', '', str_replace('findOneBy', '', $methodName));
 			$field[0] = strtolower($field[0]);
 
-			return ['entityClass' => $entityClass, 'properties' => array_keys($usedColumns), 'lineNumber' => $node->getLine()];
+			return [self::nonIndexedColumnError($entityClass, [$field], $node->getLine())];
 		}
 	}
 
