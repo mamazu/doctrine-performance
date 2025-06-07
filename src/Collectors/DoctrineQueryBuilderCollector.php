@@ -22,6 +22,7 @@ use PHPStan\Type\ObjectType;
 use PHPStan\Type\ThisType;
 use PHPStan\Type\UnionType;
 use PHPStan\Type\VerbosityLevel;
+
 /**
  * @implements Rule<MethodCall>
  * @phpstan-import-type NonIndexedColumData from NonIndexedColumnsRule
@@ -127,9 +128,7 @@ class DoctrineQueryBuilderCollector implements Collector
 		if ($entityArgument instanceof PropertyFetch) {
 			if (((string) $entityArgument->getName) === '_entityName') {
 				$entityType = $this->entityClassFinder->getEntityClassName($entityArgument->getStaticObjectType());
-				if ($entityType instanceof ObjectType) {
-					$className = $entityType->getClassName();
-				}
+				$className = $entityType?->getClassName();
 			} else {
 				throw new ErrorMessage('Using a variable as property access. That is too generic.');
 			}
@@ -211,7 +210,7 @@ class DoctrineQueryBuilderCollector implements Collector
 			if ($left instanceof ThisType) {
 				$staticType = $left->getStaticObjectType();
 				$entityType = $this->entityClassFinder->getEntityClassName($staticType);
-				if ($entityType instanceof ObjectType) {
+				if ($entityType->isObject()->yes()) {
 					$aliasMap->addAlias($aliasName, $entityType->getClassName());
 				} else {
 					throw new ErrorMessage(

@@ -1,10 +1,12 @@
 parameters:
 	doctrine_performance:
 		reportTooDynamic: false
+		allowFindAllLike: false
 
 parametersSchema:
 	doctrine_performance: structure([
 		reportTooDynamic: bool()
+		allowFindAllLike: bool()
 	])
 
 rules:
@@ -25,6 +27,7 @@ services:
 		class: 'Mamazu\DoctrinePerformance\Collectors\DoctrineRepositoryCollector'
 		arguments:
 			entityClassFinder: '@Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName'
+			allowFindAllLike: %doctrine_performance.allowFindAllLike%
 		tags: [ 'phpstan.collector' ]
 	-
 		class: 'Mamazu\DoctrinePerformance\Collectors\DoctrineQueryBuilderCollector'

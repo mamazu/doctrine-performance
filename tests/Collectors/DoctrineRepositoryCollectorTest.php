@@ -1,6 +1,8 @@
 <?php
 
-use Mamazu\DoctrinePerformance\Collectors\DoctrineQueryBuilderCollector;
+namespace Test\Mamazu\DoctrinePerformance\Collectors;
+
+use Mamazu\DoctrinePerformance\Collectors\DoctrineRepositoryCollector;
 use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
 use Mamazu\DoctrinePerformance\Rules\NonIndexedColumnsRule;
 use Mamazu\DoctrinePerformance\Services\MetadataService;
@@ -11,7 +13,7 @@ use Test\Mamazu\DoctrinePerformance\TestEntityManagerLoader;
 /**
  * @extends RuleTestCase<NonIndexedColumnsRule>
  */
-class DoctrineQueryBuilderCollectorTest extends RuleTestCase
+class DoctrineRepositoryCollectorTest extends RuleTestCase
 {
 	protected function getRule(): Rule
 	{
@@ -22,29 +24,29 @@ class DoctrineQueryBuilderCollectorTest extends RuleTestCase
 
 	protected function getCollectors(): array
 	{
-		return [new DoctrineQueryBuilderCollector(
+		return [new DoctrineRepositoryCollector(
 			new GetEntityFromClassName($this->createReflectionProvider()),
-			reportTooDynamic: false,
+			false
 		)];
 	}
 
 	public function testRule(): void
 	{
-		$this->analyse([__DIR__ . '/Fixtures/UsingQueryBuilder.php'], [
+		$this->analyse([__DIR__ . '/Fixtures/UsingRepositoryMethods.php'], [
 			[
 				'Found column "author" of entity "Test\Mamazu\DoctrinePerformance\Collectors\Fixtures\Entities\Books" which is not indexed.',
-				37,
+				24,
 			],
-		]);
-	}
-
-	public function testRuleWithExtendingRepository(): void
-	{
-		$this->analyse([__DIR__ . '/Fixtures/ExtendingRepository.php'], [
 			[
-				'Found column "nonIndexed" of entity "Test\Mamazu\DoctrinePerformance\Collectors\Fixtures\Entities\Books" which is not indexed.',
-				18,
+				'findBy with no filters is not allowed',
+				48,
+				'You could use a query builder and and iterator if you really need all entries.', //tip
 			],
+			[
+				'findAll is not allowed for performance reason',
+				53,
+				'You could use a query builder and and iterator if you really need all entries.', //tip
+			]
 		]);
 	}
 }

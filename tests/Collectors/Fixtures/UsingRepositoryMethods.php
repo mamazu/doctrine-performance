@@ -31,22 +31,25 @@ class UsingRepositoryMethods
 			'genre' => 'on',
 		]);
 
-		// There is a unique constraint called "title_and_author"
+		// There is a UNIQUE constraint called "title_and_author"
 		$c = $this->repository->findBy([
 			'title' => 'Testing',
 			'author' => 'Some author',
 		]);
 
+		// Having one indexed column is enough
 		$d = $this->repository->findBy([
-			'id' => 'true',
+			'id' => '',
 			'publishDate' => new DateTimeImmutable(),
 		]);
-	}
 
-	//public function queryIt() {
-		//$this->repository
-			//->createQueryBuilder('book')
-			//->where('author = :name')
-		//;
-	//}
+		// Non indexed order by column
+		$e = $this->repository->findBy(
+			[],
+			['title' => 'ASC']
+		);
+
+		// Disallow findAll and suggest iterating
+		$f = $this->repository->findAll();
+	}
 }

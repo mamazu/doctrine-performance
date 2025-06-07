@@ -31,9 +31,11 @@ class UsingQueryBuilder
 			->andWhere('s.key')
 		;
 
+		// Not indexed
 		$qb
 			->from(Books::class, 'b')
-			->where('b.author')
+			->where('b.author = :author')
+			->setParameter('author', 'Dickens')
 		;
 	}
 }

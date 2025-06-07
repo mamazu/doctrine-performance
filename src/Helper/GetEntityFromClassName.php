@@ -9,6 +9,7 @@ use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Type\Generic\GenericObjectType;
 use PHPStan\Type\Generic\TemplateTypeMap;
 use PHPStan\Type\ObjectType;
+use PHPStan\Type\Type;
 
 class GetEntityFromClassName
 {
@@ -20,11 +21,11 @@ class GetEntityFromClassName
 	{
 		if ($repositoryType instanceof GenericObjectType) {
 			$entityType = $repositoryType->getTypes()[0];
-			if (! $entityType instanceof ObjectType) {
-				return null;
+			if ($entityType->isObject()->yes()) {
+				return $entityType;
 			}
 
-			return $entityType;
+			return null;
 		}
 
 		$genericReflection = $this->reflectionProvider
@@ -38,9 +39,9 @@ class GetEntityFromClassName
 		return $this->getTemplateArgument($genericReflection->getActiveTemplateTypeMap());
 	}
 
-	private function getTemplateArgument(TemplateTypeMap $typeMap) {
+	private function getTemplateArgument(TemplateTypeMap $typeMap): ?ObjectType {
 		$type = reset($typeMap->getTypes());
-		if ($type instanceof ObjectType) {
+		if ($type->isObject()->yes()) {
 			return $type;
 		}
 

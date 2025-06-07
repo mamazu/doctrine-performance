@@ -7,6 +7,7 @@ namespace Mamazu\DoctrinePerformance\Rules;
 use Generator;
 use InvalidArgumentException;
 use Mamazu\DoctrinePerformance\Collectors\DoctrineQueryBuilderCollector;
+use Mamazu\DoctrinePerformance\Collectors\DoctrineRepositoryCollector;
 use Mamazu\DoctrinePerformance\Services\MetadataService;
 use PhpParser\Node;
 use PHPStan\Analyser\Scope;
@@ -53,6 +54,14 @@ class NonIndexedColumnsRule implements Rule
 	private function getErrorList(Node $node): Generator
 	{
 		foreach ($node->get(DoctrineQueryBuilderCollector::class) as $file => $declarations) {
+			foreach ($declarations as $declaration) {
+				foreach ($declaration as $errorData) {
+					yield $file => $errorData;
+				}
+			}
+		}
+
+		foreach ($node->get(DoctrineRepositoryCollector::class) as $file => $declarations) {
 			foreach ($declarations as $declaration) {
 				foreach ($declaration as $errorData) {
 					yield $file => $errorData;

@@ -34,9 +34,11 @@ class DoctrineRepositoryCollector implements Collector
 	use ErrorTrait;
 
 	private const RULE_IDENTIFIER = 'doctrine.repository.performance';
+	private const RULE_FIND_ALL = 'doctrine.repository.performance.findAll';
 
 	public function __construct(
 		private GetEntityFromClassName $entityClassFinder,
+		private bool $allowFindAllLikes,
 	) {}
 
 	public function getNodeType(): string
@@ -46,6 +48,8 @@ class DoctrineRepositoryCollector implements Collector
 
 	/**
 	 * @param MethodCall $node
+	 *
+	 * @return NonIndexedColumData
 	 */
 	public function processNode(Node $node, Scope $scope): ?array
 	{
@@ -90,8 +94,29 @@ class DoctrineRepositoryCollector implements Collector
 		}
 
 		$entityClass = $entityType->getClassName();
+		if ($methodName === 'findAll') {
+			if (!$this->allowFindAllLikes) {
+				return [self::genericError(
+					'findAll is not allowed for performance reason',
+					self::RULE_FIND_ALL,
+					$node->getLine(),
+					'You could use a query builder and and iterator if you really need all entries.'
+				)];
+			}
+			return [];
+		} else if (in_array($methodName, ['findBy', 'findOneBy'])){
+			/** @var Array_ $filters */
+			$filters = $node->args[0]->value;
 
-		if (in_array($methodName, ['findBy', 'findOneBy', 'findAll'])){
+			if (($filters->items ?? []) === []) {
+				return [self::genericError(
+					$methodName.' with no filters is not allowed',
+					self::RULE_FIND_ALL,
+					$filters->getLine(),
+					'You could use a query builder and and iterator if you really need all entries.'
+				)];
+			}
+
 			$usedColumns = $this->getUsedColumns($node->args);
 			return [self::nonIndexedColumnError($entityClass, array_keys($usedColumns), $node->getLine())];
 		} else {
