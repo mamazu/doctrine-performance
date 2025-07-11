@@ -5,7 +5,7 @@ parameters:
 
 parametersSchema:
 	doctrine_performance: structure([
-		reportTooDynamic: bool()
+		reportTooDynamic: bool(),
 		allowFindAllLike: bool()
 	])
 

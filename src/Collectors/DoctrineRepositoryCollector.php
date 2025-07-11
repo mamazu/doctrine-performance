@@ -7,6 +7,7 @@ namespace Mamazu\DoctrinePerformance\Collectors;
 use Doctrine\Persistence\ObjectRepository;
 use Mamazu\DoctrinePerformance\Errors\ErrorTrait;
 use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
+use Mamazu\DoctrinePerformance\Rules\NonIndexedColumnsRule;
 use PhpParser\Node;
 use PhpParser\Node\Arg;
 use PhpParser\Node\ArrayItem;
@@ -26,23 +27,26 @@ use PHPStan\Type\UnionType;
 use PHPStan\Type\VerbosityLevel;
 
 /**
- * @implements Collector<MethodCall>
  * @phpstan-import-type NonIndexedColumData from NonIndexedColumnsRule
+ *
+ * @implements Collector<MethodCall, array<mixed>>
  */
 class DoctrineRepositoryCollector implements Collector
 {
 	use ErrorTrait;
 
 	private const RULE_IDENTIFIER = 'doctrine.repository.performance';
+
 	private const RULE_FIND_ALL = 'doctrine.repository.performance.findAll';
 
 	public function __construct(
 		private GetEntityFromClassName $entityClassFinder,
-		private bool $allowFindAllLikes,
+		private bool $allowFindAllLike,
 	) {}
 
 	public function getNodeType(): string
 	{
+
 		return MethodCall::class;
 	}
 
@@ -87,7 +91,7 @@ class DoctrineRepositoryCollector implements Collector
 		if ($entityType === null) {
 			return [self::genericError(
 				'Could not determine entity type on: ' . $repositoryType->describe(VerbosityLevel::typeOnly()),
-				 self::RULE_IDENTIFIER . '.unknownRepo',
+				self::RULE_IDENTIFIER . '.unknownRepo',
 				$node->getLine(),
 				'Use something like /** @var ObjectRepository<Entity> */ to denote the entity of the repository',
 			)];
@@ -95,7 +99,7 @@ class DoctrineRepositoryCollector implements Collector
 
 		$entityClass = $entityType->getClassName();
 		if ($methodName === 'findAll') {
-			if (!$this->allowFindAllLikes) {
+			if (! $this->allowFindAllLike) {
 				return [self::genericError(
 					'findAll is not allowed for performance reason',
 					self::RULE_FIND_ALL,
@@ -110,7 +114,7 @@ class DoctrineRepositoryCollector implements Collector
 
 			if (($filters->items ?? []) === []) {
 				return [self::genericError(
-					$methodName.' with no filters is not allowed',
+					$methodName . ' with no filters is not allowed',
 					self::RULE_FIND_ALL,
 					$filters->getLine(),
 					'You could use a query builder and and iterator if you really need all entries.'

@@ -44,10 +44,9 @@ class UsingRepositoryMethods
 		]);
 
 		// Non indexed order by column
-		$e = $this->repository->findBy(
-			[],
-			['title' => 'ASC']
-		);
+		$e = $this->repository->findBy([], [
+				'title' => 'ASC',
+			]);
 
 		// Disallow findAll and suggest iterating
 		$f = $this->repository->findAll();

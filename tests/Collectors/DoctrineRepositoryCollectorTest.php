@@ -24,10 +24,7 @@ class DoctrineRepositoryCollectorTest extends RuleTestCase
 
 	protected function getCollectors(): array
 	{
-		return [new DoctrineRepositoryCollector(
-			new GetEntityFromClassName($this->createReflectionProvider()),
-			false
-		)];
+		return [new DoctrineRepositoryCollector(new GetEntityFromClassName($this->createReflectionProvider()), false)];
 	}
 
 	public function testRule(): void
@@ -46,7 +43,7 @@ class DoctrineRepositoryCollectorTest extends RuleTestCase
 				'findAll is not allowed for performance reason',
 				53,
 				'You could use a query builder and and iterator if you really need all entries.', //tip
-			]
+			],
 		]);
 	}
 }

@@ -17,7 +17,16 @@ use PHPStan\Rules\RuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 
 /**
- * @phpstan-type NonIndexedColumnData array{entityClass: string, properties: array<string>, lineNumber: int}|array{message: string, identifier: string, tip: ?string, lineNumber: int}
+ * @phpstan-type NonIndexedColumnData array{
+ *    entityClass: string,
+ *    properties: array<string>,
+ *    lineNumber: int
+ * }|array{
+ *    message: string,
+ *    identifier: string,
+ *    tip: ?string,
+ *    lineNumber: int
+ * }
  *
  * @implements Rule<CollectedDataNode>
  */

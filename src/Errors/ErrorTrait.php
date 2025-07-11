@@ -15,7 +15,11 @@ trait ErrorTrait
 	}
 
 	public static function genericError(string $message, string $identifer, int $line, ?string $tip): array {
-		$result = [ 'message' => $message, 'identifier' => $identifer, 'line' => $line ];
+		$result = [
+			'message' => $message,
+			'identifier' => $identifer,
+			'line' => $line,
+		];
 		if ($tip !== null){
 			$result['tip'] = $tip;
 		}

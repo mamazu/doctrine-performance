@@ -10,22 +10,22 @@ use Mamazu\DoctrinePerformance\Errors\ErrorTrait;
 use Mamazu\DoctrinePerformance\Helper\AliasMap;
 use Mamazu\DoctrinePerformance\Helper\GetEntityFromClassName;
 use Mamazu\DoctrinePerformance\Helper\UnwrapValue;
+use Mamazu\DoctrinePerformance\Rules\NonIndexedColumnsRule;
 use PhpParser\Node;
 use PhpParser\Node\Expr\MethodCall;
 use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Scalar\String_;
 use PHPStan\Analyser\Scope;
 use PHPStan\Collectors\Collector;
-use PHPStan\Rules\Rule;
 use PHPStan\Type\MixedType;
-use PHPStan\Type\ObjectType;
 use PHPStan\Type\ThisType;
 use PHPStan\Type\UnionType;
 use PHPStan\Type\VerbosityLevel;
 
 /**
- * @implements Rule<MethodCall>
  * @phpstan-import-type NonIndexedColumData from NonIndexedColumnsRule
+ *
+ * @implements Collector<MethodCall, array<mixed>>
  */
 class DoctrineQueryBuilderCollector implements Collector
 {
@@ -210,14 +210,14 @@ class DoctrineQueryBuilderCollector implements Collector
 			if ($left instanceof ThisType) {
 				$staticType = $left->getStaticObjectType();
 				$entityType = $this->entityClassFinder->getEntityClassName($staticType);
-				if ($entityType->isObject()->yes()) {
-					$aliasMap->addAlias($aliasName, $entityType->getClassName());
-				} else {
+				if ($entityType === null) {
 					throw new ErrorMessage(
 						'Could not determine repository type from: ' . $staticType->describe(VerbosityLevel::typeOnly()),
 						$methodCall->getLine()
 					);
 				}
+
+				$aliasMap->addAlias($aliasName, $entityType->getClassName());
 			} else {
 				throw new ErrorMessage('Unable to determine type of dynamic repository', $methodCall->getLine());
 			}

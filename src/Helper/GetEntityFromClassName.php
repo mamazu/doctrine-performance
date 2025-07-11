@@ -8,8 +8,7 @@ use Doctrine\Persistence\ObjectRepository;
 use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Type\Generic\GenericObjectType;
 use PHPStan\Type\Generic\TemplateTypeMap;
-use PHPStan\Type\ObjectType;
-use PHPStan\Type\Type;
+use PHPStan\Type\ObjectType as NonGenericObjectType;
 
 class GetEntityFromClassName
 {
@@ -17,11 +16,11 @@ class GetEntityFromClassName
 		private ReflectionProvider $reflectionProvider,
 	) {}
 
-	public function getEntityClassName($repositoryType): ?ObjectType
+	public function getEntityClassName($repositoryType): ?NonGenericObjectType
 	{
 		if ($repositoryType instanceof GenericObjectType) {
 			$entityType = $repositoryType->getTypes()[0];
-			if ($entityType->isObject()->yes()) {
+			if ($entityType instanceof NonGenericObjectType) {
 				return $entityType;
 			}
 
@@ -31,7 +30,6 @@ class GetEntityFromClassName
 		$genericReflection = $this->reflectionProvider
 			->getClass($repositoryType->getClassName())
 			->getAncestorWithClassName(ObjectRepository::class);
-
 		if ($genericReflection === null) {
 			return null;
 		}
@@ -39,9 +37,9 @@ class GetEntityFromClassName
 		return $this->getTemplateArgument($genericReflection->getActiveTemplateTypeMap());
 	}
 
-	private function getTemplateArgument(TemplateTypeMap $typeMap): ?ObjectType {
+	private function getTemplateArgument(TemplateTypeMap $typeMap): ?NonGenericObjectType {
 		$type = reset($typeMap->getTypes());
-		if ($type->isObject()->yes()) {
+		if ($type instanceof NonGenericObjectType) {
 			return $type;
 		}
 
